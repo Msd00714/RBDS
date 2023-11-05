@@ -1,0 +1,69 @@
+// SPDX-License-Identifier: UNLICENSED
+// Specify the license identifier for the code.
+pragma solidity ^0.8.0;
+// Indicate that the code is written for Solidity version 0.8.0 or a compatible version.
+
+contract MyBank {
+    // Define the main contract named "MyBank."
+
+    mapping(address => uint256) private _balances;
+    // Create a private mapping that associates Ethereum addresses with their account balances.
+
+    address public owner;
+    // Declare a public state variable to store the contract owner's Ethereum address.
+
+    event LogDeposit(address account, uint256 amount);
+    // Define an event to log deposit transactions, capturing the account and deposit amount.
+
+    constructor() {
+        // Constructor function, executed once when the contract is deployed.
+
+        owner = msg.sender;
+        // Set the contract owner to be the address that deploys the contract.
+        // msg.sender represents the address of the sender of the current transaction.
+
+        deposit(1000);
+        // Call the deposit function to initialize the owner's balance with 1000.
+    }
+
+    modifier validAmount(uint256 amount) {
+        // Create a custom modifier called "validAmount" to check if an amount is greater than 0.
+        require(amount > 0, "Amount must be greater than 0");
+        _;  // Continue to the function if the amount is valid.
+    }
+    
+    modifier hasSufficientBalance(uint256 amount) {
+        // Create another custom modifier called "hasSufficientBalance" to check if the caller has enough balance for a withdrawal.
+        require(_balances[msg.sender] >= amount, "Insufficient balance");
+        _;  // Continue to the function if the balance is sufficient.
+    }
+
+    function deposit(uint256 amount) public payable validAmount(amount) {
+        // Define a public function "deposit" that accepts an amount and is marked as payable to accept Ether.
+        // Apply the "validAmount" modifier to check if the amount is greater than 0.
+        
+        _balances[msg.sender] += amount;
+        // Increase the balance of the caller's address by the specified amount.
+        
+        emit LogDeposit(msg.sender, amount);
+        // Emit a log event to record the deposit transaction, including the account and amount deposited.
+    }
+
+    function withdraw(uint256 amount) public validAmount(amount) hasSufficientBalance(amount) {
+        // Define a public function "withdraw" that accepts an amount and applies both the "validAmount" and "hasSufficientBalance" modifiers.
+        
+        _balances[msg.sender] -= amount;
+        // Decrease the balance of the caller's address by the specified amount.
+        
+        payable(msg.sender).transfer(amount);
+        // Transfer the specified amount of Ether to the caller's address.
+        
+        emit LogDeposit(msg.sender, amount);
+        // Emit a log event to record the withdrawal transaction, including the account and amount withdrawn.
+    }
+
+    function viewBalance() public view returns (uint256) {
+        // Define a public view function "viewBalance" that returns the balance of the caller's address.
+        return _balances[msg.sender];
+    }
+}
